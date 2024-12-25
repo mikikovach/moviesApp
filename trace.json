@@ -1,0 +1,14 @@
+[
+  {
+    "traceId": "0123456789abcdef",
+    "id": "7778889990abcdef",
+    "name": "testMiki",
+    "timestamp": 1234567890,
+    "duration": 1000,
+    "localEndpoint": {
+      "serviceName": "movie-catalogue-service"
+    }
+  }
+]
+
+  

@@ -1,0 +1,122 @@
+
+services:
+  service-registry:
+    image: mikipriboj/service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    networks:
+      - spring-net
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+
+  config-server:
+    image: mikipriboj/config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - spring-net
+    depends_on:
+      - service-registry
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8761/eureka/
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - LOGGING_LEVEL_ROOT=DEBUG
+    networks:
+      - spring-net
+
+  api-gateway:
+    image: mikipriboj/api-gateway
+    container_name: api-gateway
+    ports:
+      - "9191:9191"
+    networks:
+      - spring-net
+    depends_on:
+#      - config-server
+      - service-registry
+      - zipkin
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+#      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_ENABLED=true
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_BASE-URL=http://zipkin:9411
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_SERVICE-NAME=api-gateway
+
+  movie-info-service:
+    image: mikipriboj/movie-info-service
+    container_name: movie-info-service
+    ports:
+      - "8082:8082"
+    networks:
+      - spring-net
+    depends_on:
+      - config-server
+      - service-registry
+      - zipkin
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_ZIPKIN_BASE_URL=http://localhost:9411
+      - MANAGEMENT_ZIPKIN_ENABLED=true
+      - MANAGEMENT_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_ENABLED=true
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_BASE-URL=http://zipkin:9411
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_SERVICE-NAME=my-microservice
+
+  movie-ratings-service:
+    image: mikipriboj/movie-ratings-service
+    container_name: movie-ratings-service
+    ports:
+      - "8081:8081"
+    networks:
+      - spring-net
+    depends_on:
+      - config-server
+      - service-registry
+      - zipkin
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/ratings_db
+      - SPRING_ZIPKIN_BASE_URL=http://localhost:9411
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_ENABLED=true
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_BASE-URL=http://zipkin:9411
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_SERVICE-NAME=movie-ratings-service
+
+  movie-catalogue-service:
+    image: mikipriboj/movie-catalogue-service
+    container_name: movie-catalogue-service
+    ports:
+      - "8080:8080"
+    networks:
+      - spring-net
+    depends_on:
+      - service-registry
+      - zipkin
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - SPRING_ZIPKIN_BASE_URL=http://localhost:9411
+      - MANAGEMENT_ZIPKIN_ENABLED=true
+      - MANAGEMENT_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_ENABLED=true
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_BASE-URL=http://zipkin:9411
+#      - MANAGEMENT_METRICS_EXPORT_ZIPKIN_SERVICE-NAME=movie-catalogue-service
+networks:
+  spring-net:
+    driver: bridge

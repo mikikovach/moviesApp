@@ -1,0 +1,29 @@
+
+FROM eclipse-temurin:17-jre-alpine
+
+## Install bash
+#RUN apk update && apk add --no-cache bash
+
+LABEL maintainer="miroslav.kovacevic@eng.it"
+
+VOLUME /tmp
+
+EXPOSE 8080
+
+ARG JAR_FILE=target/*.jar
+
+## Copy the wait-for-it.sh script to the container
+#COPY wait-for-it.sh /wait-for-it.sh
+
+# Make the script executable
+#RUN chmod +x /wait-for-it.sh
+
+# Add the application's jar to the container
+COPY ${JAR_FILE} app.jar
+
+# Run the jar file
+#"-Dspring.profiles.active=docker"
+ENTRYPOINT ["java", "-jar","/app.jar"]
+
+# Define the entrypoint to wait for the config server and then start the service
+#ENTRYPOINT ["/wait-for-it.sh", "config-server:8888", "--", "java", "-jar", "/app.jar"]

@@ -1,0 +1,14 @@
+[
+  {
+    "traceId": "fedcba9876543210",
+    "id": "fedcba9876543210",
+    "name": "test2",
+    "timestamp": 1234567891,
+    "duration": 2000,
+    "localEndpoint": {
+      "serviceName": "movie-catalogue-service"
+    }
+  }
+]
+
+  
